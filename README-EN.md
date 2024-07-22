@@ -4,7 +4,7 @@
 ![img1](.github/images/demo.png)
 
 > 🇷🇺 README на русском доступен [здесь](README.md)
-## 📌 MINIGANE Keys added
+## 📌 MINIGAME Keys added
 ## ⚙ [Settings](https://github.com/shamhi/HamsterKombatBot/blob/main/.env-example)
 | Setting                  | Description                                                                              |
 |--------------------------|------------------------------------------------------------------------------------------|
