@@ -1,4 +1,6 @@
 import heapq
+import random
+import base64
 import asyncio
 from time import time
 from random import randint
@@ -243,19 +245,27 @@ class Tapper:
 
                         await asyncio.sleep(delay=2)
 
-                    # daily_mini_game = game_config.get('dailyKeysMiniGame')
-                    # if daily_mini_game:
-                    #     is_claimed = daily_mini_game['isClaimed']
-                    #     answer_keys = daily_mini_game['levelConfig']
-                    #     seconds_to_next_attempt = daily_mini_game['remainSecondsToNextAttempt']
-                    #     cipher = ''
-                    #
-                    #     if not is_claimed and seconds_to_next_attempt <= 0:
-                    #         await start_daily_mini_game(http_client=http_client)
-                    #
-                    #         await asyncio.sleep(delay=randint(18, 26))
-                    #
-                    #         await claim_daily_mini_game(http_client=http_client, cipher=cipher)
+                   daily_mini_game = game_config.get('dailyKeysMiniGame')
+                    if daily_mini_game:
+                        is_claimed = daily_mini_game['isClaimed']
+                        seconds_to_next_attempt = daily_mini_game['remainSecondsToNextAttempt']
+                        cipher = ''
+                    
+                        if not is_claimed and seconds_to_next_attempt <= 0:
+                            await start_daily_mini_game(http_client=http_client)
+                            waitTime = randint(18, 26)
+                            logger.info(f"{self.session_name} | "
+                                                f"<lr>Start claim daily mini game</lr> | Wait <ly>{waitTime}</ly> seconds")
+                            await asyncio.sleep(delay=waitTime)
+                            cipher = (
+                                ("0" + str(waitTime) + str(random.randint(10000000000, 99999999999)))[:10]
+                                + "|"
+                                + str(profile_data['id'])
+                            )
+                            cipher_base64 = base64.b64encode(cipher.encode()).decode()                                                        
+                            await claim_daily_mini_game(http_client=http_client, cipher=cipher_base64)
+                            logger.info(f"{self.session_name} | "
+                                                f"Successfully claim daily mini game")
 
                     await asyncio.sleep(delay=2)
 
