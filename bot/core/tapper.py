@@ -245,7 +245,7 @@ class Tapper:
 
                         await asyncio.sleep(delay=2)
 
-                   daily_mini_game = game_config.get('dailyKeysMiniGame')
+                    daily_mini_game = game_config.get('dailyKeysMiniGame')
                     if daily_mini_game:
                         is_claimed = daily_mini_game['isClaimed']
                         seconds_to_next_attempt = daily_mini_game['remainSecondsToNextAttempt']
