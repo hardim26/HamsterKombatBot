@@ -285,41 +285,41 @@ class Tapper:
                         promo_activates = {promo['promoId']: promo['receiveKeysToday']
                                            for promo in promo_states}
 
-                        # app_token = "d28721be-fd2d-4b45-869e-9f253b554e50"
-                        # promo_id = "43e35910-c168-4634-ad4f-52fd764a843f"
+                        app_tokens = {
+                            "fe693b26-b342-4159-8808-15e3ff7f8767": "74ee0b5b-775e-4bee-974f-63e7f4d5bacb",
+                            "b4170868-cef0-424f-8eb9-be0622e8e8e3": "d1690a07-3780-4068-810f-9b5bbf2931b2",
+                            "c4480ac7-e178-4973-8061-9ed5b2e17954": "82647f43-3f87-402d-88dd-09a90025313f",
+                            "43e35910-c168-4634-ad4f-52fd764a843f": "d28721be-fd2d-4b45-869e-9f253b554e50"
+                        }
 
-                        promo_list = [{"":"",
-                                    "app_token": "d28721be-fd2d-4b45-869e-9f253b554e50",
-                                      "promo_id": "43e35910-c168-4634-ad4f-52fd764a843f"},
-                                     {"app_token": "d1690a07-3780-4068-810f-9b5bbf2931b2",
-                                      "promo_id": "b4170868-cef0-424f-8eb9-be0622e8e8e3"},
-                                     {"app_token": "74ee0b5b-775e-4bee-974f-63e7f4d5bacb",
-                                      "promo_id": "fe693b26-b342-4159-8808-15e3ff7f8767"},
-                                     {"app_token": "82647f43-3f87-402d-88dd-09a90025313f",
-                                      "promo_id": "c4480ac7-e178-4973-8061-9ed5b2e17954"},
-                                     ]
+                        promos = promos_data.get('promos', [])
+                        for promo in promos:
+                            promo_id = promo['promoId']
+                            app_token = app_tokens.get(promo_id)
+                            if not app_token:
+                                continue
 
-                        for promo in promo_list:
-                            app_token = promo["app_token"]
-                            promo_id = promo["promo_id"]
-
-                            keys_per_day = 4
+                            title = promo['title']['en']
+                            keys_per_day = promo['keysPerDay']
                             keys_per_code = 1
 
                             today_promo_activates_count = promo_activates.get(promo_id, 0)
 
                             if today_promo_activates_count >= keys_per_day:
-                                logger.info(f"{self.session_name} | Promo Codes already claimed today")
+                                logger.info(
+                                    f"{self.session_name} | Promo Codes already claimed today for <lm>{title}</lm> game")
 
                             while today_promo_activates_count < keys_per_day:
                                 promo_code = await get_promo_code(app_token=app_token,
                                                                   promo_id=promo_id,
-                                                                  max_attempts=10,
-                                                                  event_timeout=20,
+                                                                  promo_title=title,
+                                                                  max_attempts=15,
+                                                                  event_timeout=50,
                                                                   session_name=self.session_name,
                                                                   proxy=proxy)
 
                                 if not promo_code:
+                                    await asyncio.sleep(delay=120)
                                     continue
 
                                 profile_data, promo_state = await apply_promo(http_client=http_client,
@@ -331,13 +331,19 @@ class Tapper:
                                                                                   today_promo_activates_count)
 
                                     logger.success(f"{self.session_name} | "
-                                                   f"Successfully activated promo code <lc>{promo_code}</lc> in <lm>BIKE</lm> game | "
+                                                   f"Successfully activated promo code <lc>{promo_code}</lc> in <lm>{title}</lm> game | "
                                                    f"Get <ly>{today_promo_activates_count}</ly><lw>/</lw><ly>{keys_per_day}</ly> keys | "
                                                    f"Total keys: <le>{total_keys}</le> (<lg>+{keys_per_code}</lg>)")
+                                    tm = randint(300, 360)
+
+                                    logger.debug(f"{self.session_name} | WAIT for the next Game for <lr>{tm}</lr> Sec")
+                                    await asyncio.sleep(delay=tm)
+                                    keys_per_day = 1
                                 else:
                                     logger.info(f"{self.session_name} | "
-                                                f"Promo code <lc>{promo_code}</lc> was wrong in <lm>BIKE</lm> game | "
+                                                f"Promo code <lc>{promo_code}</lc> was wrong in <lm>{title}</lm> game | "
                                                 f"Trying again...")
+
 
                                 await asyncio.sleep(delay=2)
 
@@ -423,17 +429,18 @@ class Tapper:
                             price = upgrade['price']
                             profit = upgrade['profitPerHourDelta']
 
-                            significance = profit / max(price, 1)
-
+                            #significance = profit / max(price, 1)
+                            significance = (price/max(profit, 1)) / 24
                             free_money = balance - settings.BALANCE_TO_SAVE
                             max_price_limit = earn_on_hour * 5
 
-                            if ((free_money * 0.7) >= price
+                            if (significance <= 62
                                     and profit > 0
                                     and level <= settings.MAX_LEVEL
                                     and price <= settings.MAX_PRICE
+                                    and price < free_money
                                     and price < max_price_limit):
-                                heapq.heappush(queue, (-significance, upgrade_id, upgrade))
+                                heapq.heappush(queue, (significance, upgrade_id, upgrade))
 
                         if not queue:
                             continue
@@ -447,8 +454,8 @@ class Tapper:
                         price = upgrade['price']
                         profit = upgrade['profitPerHourDelta']
 
-                        logger.info(f"{self.session_name} | Sleep <lw>5s</lw> before upgrade <le>{upgrade_id}</le>")
-                        await asyncio.sleep(delay=5)
+                        logger.info(f"{self.session_name} | Sleep <lw>10s</lw> before upgrade <le>{upgrade_id}</le>")
+                        await asyncio.sleep(delay=10)
 
                         status, upgrades = await buy_upgrade(http_client=http_client, upgrade_id=upgrade_id)
 
