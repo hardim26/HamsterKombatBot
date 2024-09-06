@@ -422,8 +422,9 @@ class Tapper:
                             if today_promo_activates_count >= keys_per_day:
                                 logger.info(f"{self.session_name} | "
                                             f"Promo Codes already claimed today for <lm>{title}</lm> game")
-
-                            while today_promo_activates_count < keys_per_day:
+                            playG = randint(0, 4)
+                            print(playG, ' - выпало ')
+                            if today_promo_activates_count < keys_per_day and playG == 1:
                                 promo_code = await get_promo_code(app_token=app_token,
                                                                   promo_id=promo_id,
                                                                   promo_title=title,
@@ -555,7 +556,10 @@ class Tapper:
                                     and price <= settings.MAX_PRICE
                                     and price < max_price_limit):
                                 heapq.heappush(queue, (-significance, upgrade_id, upgrade))
-
+                            if price == 0:
+                                heapq.heappush(queue, (-significance, upgrade_id, upgrade))
+                            if profit == 0 and price <= 5000000:
+                                heapq.heappush(queue, (-significance, upgrade_id, upgrade))
                         if not queue:
                             continue
 
